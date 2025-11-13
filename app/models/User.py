@@ -15,4 +15,8 @@ class User(Base):
     
 
     roles = relationship("Role", secondary = "user_roles", back_populates="users")
-    
+    sessions = relationship("Session", back_populates="user")
+    audit_logs = relationship("AuditLog", back_populates="user")
+    email_tokens = relationship("EmailVerificationToken", back_populates="user")
+    reset_tokens = relationship("PasswordResetToken", back_populates="user")
+    refresh_tokens = relationship("RefreshToken", back_populates="user")    
