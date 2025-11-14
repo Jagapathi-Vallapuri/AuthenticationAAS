@@ -1,0 +1,163 @@
+from __future__ import annotations
+
+import os
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+from typing import Tuple, Optional
+
+import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+
+
+from app.models.RefreshToken import RefreshToken
+from app.models.User import User
+from app.models.Session import Session
+from app.models.RevokedToken import RevokedToken
+
+from app.services import session_service
+
+ACCESS_TOKEN_EXPIRES_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRES_MINUTES", "15"))
+REFRESH_TOKEN_EXPIRES_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRES_DAYS", "30"))
+
+def _load_private_key() -> str:
+    """"""
+    key = os.getenv("PRIVATE_KEY")
+    if key:
+        return key
+    path = os.getenv("PRIVATE_KEY_PATH")
+    if path and os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    raise RuntimeError("PRIVATE_KEY or PRIVATE_KEY_PATH must be set")
+    
+
+def _load_public_key() ->str:
+    key = os.getenv("PUBLIC_KEY")
+    if key:
+        return key
+    path = os.getenv("PUBLIC_KEY_PATH")
+    if path and os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    raise RuntimeError("PUBLIC_KEY or PUBLIC_KEY_PATH must be set")
+
+_PRIVATE_KEY = None
+_PUBLIC_KEY = None
+
+def _get_private_key():
+    global _PRIVATE_KEY
+    if _PRIVATE_KEY is None:
+        _PRIVATE_KEY = _load_private_key()
+    return _PRIVATE_KEY
+
+def _get_public_key():
+    global _PUBLIC_KEY
+    if _PUBLIC_KEY is None:
+        _PUBLIC_KEY = _load_public_key()
+    return _PUBLIC_KEY
+
+def _hash_secret(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+def _now_utc()->datetime:
+    return datetime.utcnow()
+
+
+def create_access_token_for_user(user: User, extra_claims: dict | None =None):
+    """
+    """
+    priv = _get_private_key()
+    now = _now_utc()
+    exp = now + timedelta(minutes=ACCESS_TOKEN_EXPIRES_MINUTES)
+    jti = secrets.token_urlsafe(16)
+
+    payload = {
+        "sub": str(user.id),
+        "email": user.email,
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+        "jti": jti,
+    }
+
+    if extra_claims:
+        payload.update(extra_claims)
+    
+    token = jwt.encode(payload=payload, key=priv, algorithm="RS256")
+    return token
+
+async def create_refresh_token(
+        db : AsyncSession,
+        user: User,
+        user_agent: Optional[str] = None,
+        ip_addr: Optional[str] = None,
+        expires_days: int = REFRESH_TOKEN_EXPIRES_DAYS
+) -> Tuple[str, RefreshToken]:
+    """
+    """
+
+    raw_secret = secrets.token_urlsafe(48)
+    token_hash = _hash_secret(raw_secret)
+    expires_at = _now_utc() + timedelta(days=expires_days)
+
+    rt = RefreshToken(
+        user_id = user.id,
+        token_hash = token_hash,
+        user_agent = user_agent,
+        ip_address = ip_addr,
+        created_at=_now_utc(),
+        expires_at= expires_at,
+        revoked=False
+    )
+
+    db.add(rt)
+    await db.flush()
+
+    token_str = f"{rt.id}-{user.id}-{raw_secret}"
+
+    return token_str, rt
+
+async def _get_refresh_token_by_id(db: AsyncSession, rt_id: int)-> Optional[RefreshToken]:
+    res = await db.execute(select(RefreshToken).where(RefreshToken.id == rt_id))
+    return res.scalar_one_or_none()
+
+async def verify_refresh_token_and_get_row(db: AsyncSession, token_str: str) -> RefreshToken:
+    try:
+        prefix, raw = token_str.split('.', 1)
+        rt_id, user_id = prefix.split("-", 1)
+        rt_id = int(rt_id)
+        user_id = int(user_id)
+    except Exception:
+        raise ValueError("Invalid refresh token format")
+    
+    rt = await _get_refresh_token_by_id(db, rt_id)
+
+    if not rt:
+        try:
+            await session_service.revoke_all_sessions(db, user_id)
+        except Exception:
+            raise ValueError("Invalid refresh token")
+    
+    if rt.expires_at < _now_utc(): #type:ignore
+        raise ValueError("Refresh token expired")
+    
+    if rt.revoked: #type:ignore
+        try:
+            await session_service.revoke_all_sessions(db, rt.user_id) #type: ignore
+        except Exception:
+            pass
+        raise ValueError("Refresh token revoked")
+    
+    expected_hash = rt.token_hash #type:ignore
+
+    if _hash_secret(raw) != expected_hash:
+        try:
+            await session_service.revoke_all_sessions(db, rt.user_id) #type: ignore
+        except Exception:
+            pass
+        raise ValueError("Invalid refresh token")
+    
+    return rt #type: ignore
+
+
