@@ -6,3 +6,4 @@ alembic
 python-dotenv
 passlib[bcrypt]
 PyJWT
+aiosmtplib

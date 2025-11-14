@@ -160,4 +160,79 @@ async def verify_refresh_token_and_get_row(db: AsyncSession, token_str: str) -> 
     
     return rt #type: ignore
 
+async def rotate_refresh_token(
+        db: AsyncSession,
+        presented_token: str,
+        user_agent: Optional[str] = None,
+        ip_addr: Optional[str] = None
+) -> Tuple[str, RefreshToken]:
+    """
+    """
 
+    rt = await verify_refresh_token_and_get_row(db, presented_token)
+
+    user = await db.get(User, rt.user_id)
+
+    if not user:
+        raise ValueError("Invalid refresh token user")
+    
+    new_token_str, new_rt = await create_refresh_token(
+        db, user, user_agent, ip_addr
+    )
+
+    rt.revoked = True #type: ignore
+
+    res = await db.execute(select(Session).where(Session.refresh_token_id == rt.id))
+    session_obj = res.scalar_one_or_none()
+
+    if session_obj:
+        session_obj.refresh_token_id = new_rt.id
+        session_obj.last_used_at = _now_utc() #type: ignore
+    
+    await db.flush()
+
+    return new_token_str, new_rt
+
+async def revoke_refresh_token(db: AsyncSession, token_str: str) -> bool:
+    """
+    """
+    try:
+        prefix, _ = token_str.split(".", 1)
+        rt_id_str, _ = prefix.split("-", 1)
+        rt_id = int(rt_id_str)
+    except Exception:
+        return False
+    
+    rt = await _get_refresh_token_by_id(db, rt_id)
+
+    if not rt:
+        return False
+    
+    rt.revoked = True # type: ignore
+
+    if rt and rt.session:
+        rt.session.revoked = True
+    
+    await db.flush()
+
+    return True
+
+
+async def revoke_all_refresh_tokens_for_user(db: AsyncSession, user_id: int):
+    
+    await db.execute(
+        update(RefreshToken).where(RefreshToken.user_id == user_id).values(revoked=True)
+    )
+    await session_service.revoke_all_sessions(db, user_id)
+    await db.flush()
+    return True
+
+async def revoke_access_token_jti(db: AsyncSession, jti: str):
+
+    item = RevokedToken(jti=jti)
+    db.add(item)
+    await db.flush()
+
+async def is_access_token_revoked(db: AsyncSession, jti: str) -> bool:
+    result = await db.execute(select(RevokedToken).where(RevokedToken.jti == jti))
+    return result.scalar_one_or_none() is not None
