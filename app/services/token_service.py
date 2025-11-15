@@ -64,6 +64,11 @@ def _hash_secret(raw: str) -> str:
 def _now_utc()->datetime:
     return datetime.utcnow()
 
+def verify_access_token(token: str) -> dict:
+    
+    pub = _get_public_key()
+    payload = jwt.decode(token, pub, algorithms=["RS256"], options={"verify_aud": False})
+    return payload
 
 def create_access_token_for_user(user: User, extra_claims: dict | None =None):
     """

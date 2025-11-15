@@ -8,3 +8,7 @@ class AuditAction(enum.Enum):
     TOKEN_REFRESHED = "token_refreshed"
     ROLE_ASSIGNED = "role_assigned"
     ROLE_REMOVED = "role_removed"
+    USER_REGISTERED = 'user_registered'
+    USER_UPDATED = 'user_updated'
+    LOGOUT = 'logout'
+    LOGOUT_ALL_SESSIONS = 'logout_all_sessions'

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.AuditLog import AuditLog
 from app.models.AuditAction import AuditAction
 
-async def log_section(
+async def log_action(
         db: AsyncSession, 
         user_id:Optional[int], 
         action_type: AuditAction, 
