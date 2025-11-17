@@ -93,11 +93,8 @@ async def create_permission(db: AsyncSession, data: PermissionBase) -> Permissio
 
     return perm
 
-async def get_permission_by_name(db: AsyncSession, name:str) -> Optional[Permission]:
-    res = await db.execute(
-        select(Permission).where(Permission.name == name)
-    )
-    return res.scalar_one_or_none()
+async def get_permission_by_id(db: AsyncSession, perm_id: int) -> Optional[Permission]:
+    return await db.get(Permission, perm_id)
 
 async def list_permissions(db: AsyncSession) -> List[Permission]:
     result = await db.execute(select(Permission).order_by(Permission.id))
@@ -118,6 +115,23 @@ async def assign_permission_to_role(db: AsyncSession, role: Role, perm: Permissi
     link = RolePermission(role_id = role.id, permission_od=perm.id)
     db.add(link)
 
+    await db.flush()
+    return True
+
+async def assign_role_to_user(db: AsyncSession, user: User, role:Role ):
+
+    res = await db.execute(
+        select(UserRole).where(
+            UserRole.user_id == user.id,
+            UserRole.role_id == role.id
+        )
+    )
+    existing = res.scalar_one_or_none()
+    if existing:
+        return False
+    
+    link = UserRole(user_id = user.id, role_id=role.id)
+    db.add(link)
     await db.flush()
     return True
 

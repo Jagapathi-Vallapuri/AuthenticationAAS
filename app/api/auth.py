@@ -116,9 +116,8 @@ async def refresh_token(
 async def logout(
     data: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db)
-    user=Depends(get_current_user)
+    user = Depends(get_current_user)
 ):
-    
     await token_service.revoke_refresh_token(db, data.refresh_token)
     await db.commit()
 
