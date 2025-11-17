@@ -48,7 +48,7 @@ async def _send_email_async(
 
 
 async def send_verification_email(user: User, raw_token: str) -> bool:
-    verify_url = f"{APP_BASE_URL}/verify-email?token={raw_token}"
+    verify_url = f"{APP_BASE_URL}/verify-email.html?token={raw_token}"
 
     html = f"""
     <html>
@@ -61,7 +61,6 @@ async def send_verification_email(user: User, raw_token: str) -> bool:
     </body>
     </html>
     """
-
     return await _send_email_async(
         to_email=user.email, #type: ignore
         subject="Verify your email",

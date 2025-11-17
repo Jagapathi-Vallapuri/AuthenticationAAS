@@ -14,8 +14,7 @@ async def log_action(
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
         ) -> None:
-    try:
-        log = AuditLog(
+    log = AuditLog(
             user_id=user_id,
             action_type = action_type,
             metadata=metadata or {},
@@ -23,8 +22,5 @@ async def log_action(
             user_agent=user_agent
         )
 
-        db.add(log)
-        await db.flush()
-        
-    except Exception:
-        pass
+    db.add(log)
+    await db.flush()

@@ -25,8 +25,6 @@ async def register_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
     raw_token = await auth_service.create_email_verification_token(db, user)
 
     await email_service.send_verification_email(user, raw_token)
-    await db.commit()
-
     await audit_service.log_action(
         db,
         user_id=user.id,
@@ -65,8 +63,6 @@ async def login(req: Request, data: LoginRequest, db: AsyncSession = Depends(get
         db, user, refresh_obj, device_token=user_agent
     )
 
-    await db.commit()
-
     await audit_service.log_action(
         db,
         user_id=user.id,
@@ -101,7 +97,6 @@ async def refresh_token(
     user = await db.get(new_refresh_obj.__class__.user.property.mapper.class_, new_refresh_obj.user_id)
     access_token = token_service.create_access_token_for_user(user)
 
-    await db.commit()
 
     await audit_service.log_action(
         db, user_id=user.id, action_type=AuditAction.TOKEN_REFRESHED,
@@ -109,17 +104,15 @@ async def refresh_token(
     )
 
     await db.commit()
-
     return RefreshTokenResponse(access_token=access_token, refresh_token=new_refresh_str)
 
 @router.post('/logout')
 async def logout(
     data: RefreshTokenRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
     user = Depends(get_current_user)
 ):
     await token_service.revoke_refresh_token(db, data.refresh_token)
-    await db.commit()
 
     await audit_service.log_action(
         db,
@@ -137,7 +130,6 @@ async def logout_all(
     curr_user = Depends(get_current_user)
 ):
     await token_service.revoke_all_refresh_tokens_for_user(db, curr_user.id)
-    await db.commit()
 
     await audit_service.log_action(
         db,

@@ -1,4 +1,4 @@
-from db.base import Base
+from app.db.base import Base
 from sqlalchemy import Column, BigInteger, ForeignKey, Text, DateTime, Boolean, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import INET

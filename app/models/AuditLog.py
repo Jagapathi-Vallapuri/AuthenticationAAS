@@ -1,5 +1,5 @@
 from sqlalchemy import BigInteger, Column, DateTime, Text, ForeignKey, Enum, func
-from db.base import Base
+from app.db.base import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, INET
 from .AuditAction import AuditAction

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, BigInteger, ForeignKey, Boolean, DateTime, Text, func
 from sqlalchemy.orm import relationship
-from db.base import Base
+from app.db.base import Base
 
 class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"

@@ -50,7 +50,7 @@ async def revoke_session(db: AsyncSession, session_id: int) -> bool:
     if session.refresh_token:
         session.refresh_token.revoked = True
     
-    await db.commit()
+    await db.flush()
 
     return True
 

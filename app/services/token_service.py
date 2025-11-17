@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple, Optional
 
 import jwt
@@ -62,7 +62,7 @@ def _hash_secret(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 def _now_utc()->datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 def verify_access_token(token: str) -> dict:
     
@@ -142,7 +142,8 @@ async def verify_refresh_token_and_get_row(db: AsyncSession, token_str: str) -> 
         try:
             await session_service.revoke_all_sessions(db, user_id)
         except Exception:
-            raise ValueError("Invalid refresh token")
+            pass
+        raise ValueError("Invalid refresh token")
     
     if rt.expires_at < _now_utc(): #type:ignore
         raise ValueError("Refresh token expired")

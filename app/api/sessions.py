@@ -77,7 +77,7 @@ async def list_all_sessions(
     return sessions
 
 @router.post('/{session_id}/force-revoke')
-async def force_revoke_session(session_id:int, db: AsyncSession, admin = Depends(require_roles('admin'))):
+async def force_revoke_session(session_id:int, db: AsyncSession = Depends(get_db), admin = Depends(require_roles('admin'))):
     ok = await session_service.revoke_session(db, session_id)
     if not ok:
         raise HTTPException(404, 'Session not found')

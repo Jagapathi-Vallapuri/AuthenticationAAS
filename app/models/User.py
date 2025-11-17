@@ -1,4 +1,4 @@
-from db.base import Base
+from app.db.base import Base
 from sqlalchemy import BigInteger, Boolean, Column, String, Integer, DateTime, Index, Text, func
 from sqlalchemy.dialects.postgresql import CITEXT
 from sqlalchemy.orm import relationship
