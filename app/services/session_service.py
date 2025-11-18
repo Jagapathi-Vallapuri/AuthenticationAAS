@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update, select
+from sqlalchemy.orm import selectinload
 
 from app.models.User import User
 from app.models.RefreshToken import RefreshToken
@@ -17,7 +18,7 @@ async def create_session(
         user_id= user.id,
         refresh_token_id = refresh_token.id,
         device_info = device_token,
-        last_used_at = datetime.utcnow(),
+        last_used_at = datetime.now(timezone.utc),
         revoked = False,
     )
 
@@ -30,7 +31,7 @@ async def touch_session(db: AsyncSession, session_id: int):
     await db.execute(
         update(Session)
         .where(Session.id == session_id)
-        .values(last_used_at=datetime.utcnow())
+        .values(last_used_at=datetime.now(timezone.utc))
     )
     await db.flush()
 
@@ -57,6 +58,7 @@ async def revoke_session(db: AsyncSession, session_id: int) -> bool:
 async def revoke_all_sessions(db: AsyncSession, user_id: int):
     res = await db.execute(
         select(Session).where(Session.user_id == user_id)
+        .options(selectinload(Session.refresh_token))
     )
     sessions = res.scalars().all()
 
@@ -66,13 +68,13 @@ async def revoke_all_sessions(db: AsyncSession, user_id: int):
             s.refresh_token.revoked = True
     
     await db.commit()
-
     return True
 
 async def get_user_sessions(db: AsyncSession, user_id: int) -> List[Session]:
     result = await db.execute(
         select(Session)
         .where(Session.user_id == user_id)
+        .options(selectinload(Session.refresh_token))
         .order_by(Session.last_used_at.desc())
     )
     return list(result.scalars().all())

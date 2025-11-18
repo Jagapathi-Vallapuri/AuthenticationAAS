@@ -72,7 +72,7 @@ async def send_password_reset_email(user: User, raw_token: str) -> bool:
     Sends a password reset link to the user.
     """
 
-    reset_url = f"{APP_BASE_URL}/reset-password?token={raw_token}"
+    reset_url = f"{APP_BASE_URL}/reset-password.html?token={raw_token}"
 
     html = f"""
     <html>

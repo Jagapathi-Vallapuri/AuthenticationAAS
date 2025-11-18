@@ -175,7 +175,7 @@ async def request_password_reset(
     db: AsyncSession = Depends(get_db)
 ):
     user = await user_service.get_user_by_email(db, data.email)
-    raw = await auth_service.create_email_verification_token(db, user)
+    raw = await auth_service.create_password_reset_token(db, user)
 
     if raw:
         await email_service.send_password_reset_email(user, raw)
@@ -183,7 +183,7 @@ async def request_password_reset(
 
     return { 'message': 'If an account exists, a reset email has been sent'}
 
-@router.post('/password-reset/comfirm')
+@router.post('/password-reset/confirm')
 async def confirm_reset(
     data: PasswordResetConfirm,
     db: AsyncSession = Depends(get_db)

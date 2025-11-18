@@ -124,3 +124,19 @@ async def create_email_verification_token(db: AsyncSession, user: User):
     await db.flush()
 
     return raw_token
+
+async def create_password_reset_token(db: AsyncSession, user: User):
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+    token = PasswordResetToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+        used=False,
+    )
+
+    db.add(token)
+    await db.flush()
+
+    return raw_token

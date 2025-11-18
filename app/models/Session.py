@@ -14,3 +14,9 @@ class Session(Base):
 
     user = relationship("User", back_populates="sessions")
     refresh_token = relationship("RefreshToken", back_populates="session")
+
+    @property
+    def ip_address(self) -> str | None:
+        if self.refresh_token.ip_address and self.refresh_token is not None:
+            return str(self.refresh_token.ip_address)
+        return None
