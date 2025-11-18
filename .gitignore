@@ -89,5 +89,3 @@ __pypackages__/
 
 # Ignore local IDE run configs
 .run/
-
-/auth-frontend

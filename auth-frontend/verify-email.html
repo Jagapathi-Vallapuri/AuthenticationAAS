@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Email Verification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Email Verification</h1>
+  <p id="status">Loading...</p>
+
+  <script>
+    const apiBase = "http://localhost:8000";
+
+    function init() {
+      const statusEl = document.getElementById("status");
+
+      if (window.location.pathname !== "/verify-email.html") {
+        statusEl.textContent = "This page is for email verification. Please use the link from your email.";
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+
+      if (!token) {
+        statusEl.textContent = "Missing verification token.";
+        return;
+      }
+
+      statusEl.textContent = "Verifying your email…";
+
+      fetch(`${apiBase}/auth/verify-email/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (ok) {
+            statusEl.textContent = "Your email has been verified successfully.";
+          } else {
+            statusEl.textContent = data.detail || "Verification failed.";
+          }
+        })
+        .catch(err => {
+          statusEl.textContent = "Network error while verifying email.";
+        });
+    }
+
+    window.addEventListener("load", init);
+  </script>
+</body>
+</html>
