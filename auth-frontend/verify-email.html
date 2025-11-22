@@ -4,23 +4,37 @@
   <meta charset="UTF-8" />
   <title>Email Verification</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
-    .hidden { display: none; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Email Verification</h1>
-  <p id="status">Loading...</p>
+  <div class="container">
+    <div class="card">
+      <div id="icon-container" class="status-icon">
+        <div class="loader"></div>
+      </div>
+      
+      <h1 id="title">Verifying Email</h1>
+      <p id="status">Please wait while we verify your email address...</p>
+    </div>
+  </div>
 
   <script>
     const apiBase = "http://localhost:8000";
 
+    // SVG Icons
+    const successIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>`;
+    const errorIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+
     function init() {
       const statusEl = document.getElementById("status");
+      const titleEl = document.getElementById("title");
+      const iconContainer = document.getElementById("icon-container");
 
       if (window.location.pathname !== "/verify-email.html") {
+        titleEl.textContent = "Incorrect Link";
         statusEl.textContent = "This page is for email verification. Please use the link from your email.";
+        iconContainer.innerHTML = errorIcon;
+        iconContainer.classList.add("error");
         return;
       }
 
@@ -28,11 +42,12 @@
       const token = params.get("token");
 
       if (!token) {
-        statusEl.textContent = "Missing verification token.";
+        titleEl.textContent = "Missing Token";
+        statusEl.textContent = "The verification link is invalid or missing a token.";
+        iconContainer.innerHTML = errorIcon;
+        iconContainer.classList.add("error");
         return;
       }
-
-      statusEl.textContent = "Verifying your email…";
 
       fetch(`${apiBase}/auth/verify-email/confirm`, {
         method: "POST",
@@ -42,13 +57,22 @@
         .then(res => res.json().then(data => ({ ok: res.ok, data })))
         .then(({ ok, data }) => {
           if (ok) {
-            statusEl.textContent = "Your email has been verified successfully.";
+            titleEl.textContent = "Email Verified";
+            statusEl.textContent = "Your email has been verified successfully. You can now close this window.";
+            iconContainer.innerHTML = successIcon;
+            iconContainer.classList.add("success");
           } else {
-            statusEl.textContent = data.detail || "Verification failed.";
+            titleEl.textContent = "Verification Failed";
+            statusEl.textContent = data.detail || "We couldn't verify your email. The link may have expired.";
+            iconContainer.innerHTML = errorIcon;
+            iconContainer.classList.add("error");
           }
         })
         .catch(err => {
-          statusEl.textContent = "Network error while verifying email.";
+          titleEl.textContent = "Network Error";
+          statusEl.textContent = "An error occurred while connecting to the server. Please try again later.";
+          iconContainer.innerHTML = errorIcon;
+          iconContainer.classList.add("error");
         });
     }
 

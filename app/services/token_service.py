@@ -129,7 +129,7 @@ async def _get_refresh_token_by_id(db: AsyncSession, rt_id: int)-> Optional[Refr
 
 async def verify_refresh_token_and_get_row(db: AsyncSession, token_str: str) -> RefreshToken:
     try:
-        rt_id, user_id, raw = token_str.split('-')
+        rt_id, user_id, raw = token_str.split('-', 2)
         rt_id = int(rt_id)
         user_id = int(user_id)
     except Exception:
@@ -202,8 +202,7 @@ async def revoke_refresh_token(db: AsyncSession, token_str: str) -> bool:
     """
     """
     try:
-        prefix, _ = token_str.split(".", 1)
-        rt_id_str, _ = prefix.split("-", 1)
+        rt_id_str, _, _ = token_str.split("-", 2)
         rt_id = int(rt_id_str)
     except Exception:
         return False
