@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -18,30 +17,32 @@ from app.models.RevokedToken import RevokedToken
 
 from app.services import session_service
 
-ACCESS_TOKEN_EXPIRES_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRES_MINUTES", "15"))
-REFRESH_TOKEN_EXPIRES_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRES_DAYS", "30"))
+from app.core.config import settings
+
+ACCESS_TOKEN_EXPIRES_MINUTES = settings.ACCESS_TOKEN_EXPIRES_MINUTES
+REFRESH_TOKEN_EXPIRES_DAYS = settings.REFRESH_TOKEN_EXPIRES_DAYS
 
 def _load_private_key() -> str:
-    """"""
-    key = os.getenv("PRIVATE_KEY")
+    """Load private key from settings (inline or file path)."""
+    key = settings.PRIVATE_KEY
     if key:
         return key
-    path = os.getenv("PRIVATE_KEY_PATH")
-    if path and os.path.exists(path):
+    path = settings.PRIVATE_KEY_PATH
+    if path and path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return f.read()
-    raise RuntimeError("PRIVATE_KEY or PRIVATE_KEY_PATH must be set")
+    raise RuntimeError("PRIVATE_KEY or PRIVATE_KEY_PATH must be set in settings")
     
 
-def _load_public_key() ->str:
-    key = os.getenv("PUBLIC_KEY")
+def _load_public_key() -> str:
+    key = settings.PUBLIC_KEY
     if key:
         return key
-    path = os.getenv("PUBLIC_KEY_PATH")
-    if path and os.path.exists(path):
+    path = settings.PUBLIC_KEY_PATH
+    if path and path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return f.read()
-    raise RuntimeError("PUBLIC_KEY or PUBLIC_KEY_PATH must be set")
+    raise RuntimeError("PUBLIC_KEY or PUBLIC_KEY_PATH must be set in settings")
 
 _PRIVATE_KEY = None
 _PUBLIC_KEY = None

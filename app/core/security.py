@@ -9,13 +9,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.User import User
+from app.core.config import settings
 from app.services import token_service, role_service
 from app.db.database import get_db
 from app.services.role_service import get_user_permissions, get_user_roles
 
 bearer_scheme = HTTPBearer(auto_error = False)
 
-ACCESS_TOKEN_COOKIE_NAME = os.getenv("ACCESS_TOKEN_COOKIE_NAME", "access_token")
+ACCESS_TOKEN_COOKIE_NAME = settings.ACCESS_TOKEN_COOKIE_NAME
 
 
 async def get_token_from_header_or_cookie(

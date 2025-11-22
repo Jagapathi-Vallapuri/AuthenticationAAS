@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import os 
 import aiosmtplib
 from email.message import EmailMessage
 from typing import Optional
 
 from app.models.User import User
+from app.core.config import settings
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_FROM = os.getenv("SMTP_FROM")
+SMTP_HOST = settings.SMTP_HOST
+SMTP_PORT = settings.SMTP_PORT
+SMTP_USER = settings.SMTP_USER
+SMTP_PASSWORD = settings.SMTP_PASSWORD
+SMTP_FROM = settings.SMTP_FROM
 
-APP_BASE_URL = os.getenv("APP_BASE_URL")
+APP_BASE_URL = str(settings.APP_BASE_URL)
 
 
 async def _send_email_async(

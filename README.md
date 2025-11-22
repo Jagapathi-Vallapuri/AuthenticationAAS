@@ -62,14 +62,18 @@ AuthenticationAAS/
 2. **Create a `.env` file at the project root** (matching the variables the services consume):
 
     ```env
-    # PostgreSQL (psycopg async URL pieces)
-    user=postgres
-    password=postgres
-    host=localhost
-    port=5432
-    dbname=authentication_aas
+    # Database (either whole URL or pieces)
+    # Option A: full SQLAlchemy URL
+    # DATABASE_URL=postgresql+psycopg://user:pass@host:5432/dbname?sslmode=require
 
-    # JWT / token settings
+    # Option B: pieces (these names map to the Pydantic Settings used by the app)
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_HOST=localhost
+    DB_PORT=5432
+    DB_NAME=authentication_aas
+
+    # JWT / token settings (either inline key or path to PEM files)
     PRIVATE_KEY_PATH=testing.key
     PUBLIC_KEY_PATH=testing_public.key
     ACCESS_TOKEN_EXPIRES_MINUTES=15
@@ -81,13 +85,18 @@ AuthenticationAAS/
     SMTP_USER=apikey
     SMTP_PASSWORD=secret
     SMTP_FROM=no-reply@example.com
+
+    # Frontend base URL used in emails
     APP_BASE_URL=http://localhost:3000
 
-    # Optional cookie name overrides
+    # CORS / allowed origins (comma separated values are supported by Pydantic list parsing)
+    ALLOWED_ORIGINS=http://localhost:3000
+
+    # Cookie name
     ACCESS_TOKEN_COOKIE_NAME=access_token
     ```
 
-    > Use either `_PATH` variables pointing to PEM files or inline `PRIVATE_KEY` / `PUBLIC_KEY` values.
+    > The project now uses a Pydantic `Settings` (`app.core.config.Settings`) to centralize configuration. You can provide `DATABASE_URL` directly or set the `DB_*` pieces. For keys you may use inline `PRIVATE_KEY` / `PUBLIC_KEY` or point to files with `PRIVATE_KEY_PATH` / `PUBLIC_KEY_PATH`.
 
 3. **Run database migrations**
 
