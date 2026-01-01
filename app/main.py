@@ -29,6 +29,6 @@ app.include_router(users_router, prefix="/users")
 app.include_router(roles_router, prefix="/roles")
 app.include_router(sessions_router, prefix="/sessions")
 
-app.get('/')
+@app.get('/')
 def root():
     return {'message': 'AuthenticationAAS running'}

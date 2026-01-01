@@ -17,6 +17,6 @@ class Session(Base):
 
     @property
     def ip_address(self) -> str | None:
-        if self.refresh_token.ip_address and self.refresh_token is not None:
+        if self.refresh_token is not None and self.refresh_token.ip_address:
             return str(self.refresh_token.ip_address)
         return None

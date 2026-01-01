@@ -68,13 +68,12 @@ async def list_all_sessions(
     db: AsyncSession = Depends(get_db),
     _admin = Depends(require_roles('admin'))
 ):
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
     from app.models.Session import Session
 
-    res = await db.execute(Session.__table__.select())
-    rows = res.all()
-
-    sessions = [Session(**dict(row)) for row in rows]
-    return sessions
+    res = await db.execute(select(Session).options(selectinload(Session.refresh_token)))
+    return list(res.scalars().all())
 
 @router.post('/{session_id}/force-revoke')
 async def force_revoke_session(session_id:int, db: AsyncSession = Depends(get_db), admin = Depends(require_roles('admin'))):

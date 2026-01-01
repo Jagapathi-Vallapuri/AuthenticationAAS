@@ -17,7 +17,7 @@ async def log_action(
     log = AuditLog(
             user_id=user_id,
             action_type = action_type,
-            metadata=metadata or {},
+            metadata_=metadata or {},
             ip_address= ip_address,
             user_agent=user_agent
         )

@@ -32,6 +32,8 @@ async def create_role(
     except ValueError as e:
         raise HTTPException(400, str(e))
 
+    return role
+
 @router.get('/', response_model=List[RoleRead])
 async def list_roles(
     db: AsyncSession = Depends(get_db),

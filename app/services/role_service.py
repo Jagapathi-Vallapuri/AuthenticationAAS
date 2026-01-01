@@ -60,12 +60,10 @@ async def remove_role_from_user(db: AsyncSession, user: User, role: Role) -> boo
 
     existing = res.scalar_one_or_none()
 
-    if existing:
+    if not existing:
         return False
-    
-    link = UserRole(user_id = user.id, role_id = role.id)
-    db.add(link)
 
+    await db.delete(existing)
     await db.flush()
     return True
 
@@ -112,7 +110,7 @@ async def assign_permission_to_role(db: AsyncSession, role: Role, perm: Permissi
     if existing:
         return False
     
-    link = RolePermission(role_id = role.id, permission_od=perm.id)
+    link = RolePermission(role_id=role.id, permission_id=perm.id)
     db.add(link)
 
     await db.flush()

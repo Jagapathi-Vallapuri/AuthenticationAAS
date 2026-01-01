@@ -2,11 +2,11 @@ from logging.config import fileConfig
 from app.db.base import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from alembic import context
+from app.core.config import settings
 from app.models import *
 
 # this is the Alembic Config object, which provides
@@ -16,15 +16,8 @@ load_dotenv()
 
 config = context.config
 
-USER = os.getenv("user")
-PASSWORD = os.getenv("password")
-HOST = os.getenv("host")
-PORT = os.getenv("port")
-DBNAME = os.getenv("dbname")
-
-DATABASE_URL = f"postgresql+psycopg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# Keep Alembic aligned with runtime settings (DB_* env vars from .env)
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 
 # Interpret the config file for Python logging.

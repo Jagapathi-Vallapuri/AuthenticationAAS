@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     DB_HOST: Optional[str] = None
     DB_PORT: Optional[int] = 5432
     DB_NAME: Optional[str] = 'postgres'
+    DB_SSLMODE: str = 'require'
 
     PRIVATE_KEY: Optional[str] = None
     PUBLIC_KEY: Optional[str] = None
@@ -57,7 +58,8 @@ class Settings(BaseSettings):
         port = int(self.DB_PORT or 5432)
         name = self.DB_NAME or "postgres"
 
-        return f"postgresql+psycopg://{user}:{pwd}@{host}:{port}/{name}?sslmode=require"
+        sslmode = (self.DB_SSLMODE or 'require').strip()
+        return f"postgresql+psycopg://{user}:{pwd}@{host}:{port}/{name}?sslmode={sslmode}"
 
 
 settings = Settings()

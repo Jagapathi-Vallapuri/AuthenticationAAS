@@ -134,7 +134,7 @@ async def logout_all(
     await audit_service.log_action(
         db,
         user_id=curr_user.id,
-        action_type=AuditAction.LOGOUT,
+        action_type=AuditAction.LOGOUT_ALL_SESSIONS,
     )
 
     await db.commit()
@@ -175,13 +175,14 @@ async def request_password_reset(
     db: AsyncSession = Depends(get_db)
 ):
     user = await user_service.get_user_by_email(db, data.email)
+    if not user:
+        return {"message": "If an account exists, a reset email has been sent"}
+
     raw = await auth_service.create_password_reset_token(db, user)
+    await email_service.send_password_reset_email(user, raw)
+    await db.commit()
 
-    if raw:
-        await email_service.send_password_reset_email(user, raw)
-        await db.commit()
-
-    return { 'message': 'If an account exists, a reset email has been sent'}
+    return {"message": "If an account exists, a reset email has been sent"}
 
 @router.post('/password-reset/confirm')
 async def confirm_reset(

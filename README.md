@@ -56,7 +56,7 @@ AuthenticationAAS/
     cd C:\Users\Jagapathi Vallapuri\Desktop\Projects\AuthenticationAAS
     python -m venv .venv
     .\.venv\Scripts\Activate.ps1
-    pip install -r app\requirements.txt
+    pip install -r requirements.txt
     ```
 
 2. **Create a `.env` file at the project root** (matching the variables the services consume):
@@ -72,6 +72,10 @@ AuthenticationAAS/
     DB_HOST=localhost
     DB_PORT=5432
     DB_NAME=authentication_aas
+
+    # Postgres SSL mode: use "disable" for local Docker/Postgres,
+    # keep "require" for managed/cloud Postgres that enforces SSL
+    DB_SSLMODE=disable
 
     # JWT / token settings (either inline key or path to PEM files)
     PRIVATE_KEY_PATH=testing.key
@@ -101,8 +105,12 @@ AuthenticationAAS/
 3. **Run database migrations**
 
     ```pwsh
-    alembic upgrade head
+    python -m alembic upgrade head
     ```
+
+    > This project uses Postgres `citext` for case-insensitive emails.
+    > The initial migration enables it via `CREATE EXTENSION IF NOT EXISTS citext`.
+    > On some managed Postgres providers, creating extensions may require elevated privileges.
 
 4. **Launch the API server**
 
